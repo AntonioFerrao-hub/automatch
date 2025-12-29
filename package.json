@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "AutoMatch - Marketplace de Leads Automotivos",
   "private": true,
+  "type": "module",
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -11,7 +12,14 @@
     "lucide-react": "^0.468.0",
     "@google/genai": "latest"
   },
+  "devDependencies": {
+    "vite": "^6.0.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2"
+  },
   "scripts": {
-    "start": "serve ."
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   }
 }
