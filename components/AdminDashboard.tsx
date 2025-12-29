@@ -30,7 +30,11 @@ import {
   Zap,
   Target,
   Sun,
-  Moon
+  Moon,
+  ArrowUpRight,
+  ArrowDownRight,
+  History,
+  CheckCircle2
 } from 'lucide-react';
 import { MOCK_LEADS, MOCK_DEALERS, MOCK_ADMINS } from '../constants';
 import { Lead, Dealership, AdminUser } from '../types';
@@ -61,6 +65,13 @@ const AdminDashboard: React.FC = () => {
     plan: 'Starter' as Dealership['plan'],
     credits: 0
   });
+
+  // Credit Adjustment State
+  const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
+  const [creditModalTarget, setCreditModalTarget] = useState<Dealership | null>(null);
+  const [adjustmentType, setAdjustmentType] = useState<'add' | 'deduct'>('add');
+  const [adjustmentAmount, setAdjustmentAmount] = useState<number>(10);
+  const [adjustmentNote, setAdjustmentNote] = useState('');
 
   const [showAddAdmin, setShowAddAdmin] = useState(false);
   const [newAdmin, setNewAdmin] = useState({
@@ -118,6 +129,31 @@ const AdminDashboard: React.FC = () => {
     setShowDealerForm(true);
   };
 
+  const openCreditModal = (dealer: Dealership) => {
+    setCreditModalTarget(dealer);
+    setAdjustmentAmount(10);
+    setAdjustmentNote('');
+    setAdjustmentType('add');
+    setIsCreditModalOpen(true);
+  };
+
+  const handleApplyCredits = () => {
+    if (!creditModalTarget) return;
+    const finalAmount = adjustmentType === 'add' ? adjustmentAmount : -adjustmentAmount;
+    
+    setDealers(prev => prev.map(d => 
+      d.id === creditModalTarget.id 
+        ? { ...d, credits: Math.max(0, d.credits + finalAmount) } 
+        : d
+    ));
+
+    // In a real app, we would send 'adjustmentNote' to the backend here
+    console.log(`Credit Adjustment Log: Dealer ${creditModalTarget.name}, Amount: ${finalAmount}, Note: ${adjustmentNote}`);
+    
+    setIsCreditModalOpen(false);
+    setCreditModalTarget(null);
+  };
+
   const saveDealer = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingDealer) {
@@ -138,10 +174,6 @@ const AdminDashboard: React.FC = () => {
     if(confirm('Excluir revenda parceira?')) {
       setDealers(dealers.filter(d => d.id !== id));
     }
-  };
-
-  const updateDealerCredits = (id: string, amount: number) => {
-    setDealers(prev => prev.map(d => d.id === id ? { ...d, credits: Math.max(0, d.credits + amount) } : d));
   };
 
   const toggleDealerStatus = (id: string) => {
@@ -190,6 +222,70 @@ const AdminDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
       )}
 
+      {/* Credit Adjustment Modal */}
+      {isCreditModalOpen && creditModalTarget && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div className="bg-slate-50 dark:bg-slate-950 p-10 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start">
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Gestão de Créditos</h3>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{creditModalTarget.name}</p>
+              </div>
+              <button onClick={() => setIsCreditModalOpen(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white"><X size={24}/></button>
+            </div>
+            
+            <div className="p-10 space-y-8">
+              <div className="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <button 
+                  onClick={() => setAdjustmentType('add')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${adjustmentType === 'add' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-400'}`}
+                >
+                  <ArrowUpRight size={14}/> Adicionar
+                </button>
+                <button 
+                  onClick={() => setAdjustmentType('deduct')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${adjustmentType === 'deduct' ? 'bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 shadow-sm' : 'text-slate-400'}`}
+                >
+                  <ArrowDownRight size={14}/> Deduzir
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <label className={labelClasses}>Quantidade de Créditos</label>
+                <div className="relative">
+                  <CreditCard className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                  <input 
+                    type="number" 
+                    className={adminInputClasses + " pl-14"} 
+                    value={adjustmentAmount}
+                    onChange={e => setAdjustmentAmount(Math.abs(parseInt(e.target.value) || 0))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className={labelClasses}>Nota da Transação (Obrigatório)</label>
+                <textarea 
+                  rows={3}
+                  className={adminInputClasses + " resize-none"} 
+                  placeholder="Ex: Recarga via PIX #12345 ou Ajuste de bônus promocional..."
+                  value={adjustmentNote}
+                  onChange={e => setAdjustmentNote(e.target.value)}
+                />
+              </div>
+
+              <button 
+                onClick={handleApplyCredits}
+                disabled={!adjustmentNote || adjustmentAmount <= 0}
+                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 py-6 rounded-3xl font-black text-sm uppercase tracking-[0.2em] shadow-xl hover:-translate-y-1 transition-all disabled:opacity-30 disabled:translate-y-0"
+              >
+                Efetivar Ajuste
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <aside className={`fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-900 flex flex-col z-50 transition-transform duration-300 lg:translate-x-0 lg:static lg:h-screen ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-8 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -226,7 +322,6 @@ const AdminDashboard: React.FC = () => {
               <input type="text" placeholder="Global Search..." className={adminInputClasses + " pl-12 !py-2.5 !w-64"} onChange={(e) => setSearchTerm(e.target.value)}/>
             </div>
             
-            {/* Theme Toggle */}
             <button 
               onClick={toggleTheme}
               className="p-3 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all shadow-sm"
@@ -246,7 +341,7 @@ const AdminDashboard: React.FC = () => {
                 {[
                   { label: 'Total Leads', value: leads.length, icon: <Users />, change: '+14%' },
                   { label: 'Revenue (MM)', value: 'R$ 2.4', icon: <CreditCard />, change: '+22%' },
-                  { label: 'Partneers', value: dealers.length, icon: <Building2 />, change: '+3%' },
+                  { label: 'Partners', value: dealers.length, icon: <Building2 />, change: '+3%' },
                   { label: 'Conv. Rate', value: '28.4%', icon: <BarChart3 />, change: '+1.5%' },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl group transition-all hover:border-indigo-500">
@@ -433,10 +528,14 @@ const AdminDashboard: React.FC = () => {
                           <td className="px-10 py-8">
                              <div className="flex flex-col items-center gap-2">
                                 <p className="font-black text-slate-900 dark:text-white text-xl tracking-tighter">{dealer.credits}</p>
-                                <div className="flex gap-2">
-                                   <button onClick={() => updateDealerCredits(dealer.id, 10)} className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-slate-200 dark:border-slate-800 transition-all"><Plus size={14}/></button>
-                                   <button onClick={() => updateDealerCredits(dealer.id, -10)} className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-slate-200 dark:border-slate-800 transition-all"><Trash2 size={14}/></button>
-                                </div>
+                                <button 
+                                  onClick={() => openCreditModal(dealer)}
+                                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 hover:bg-indigo-600 hover:text-white text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-800 transition-all shadow-sm"
+                                  title="Ajustar Créditos"
+                                >
+                                  <CreditCard size={14}/>
+                                  <span className="text-[8px] font-black uppercase tracking-widest">Ajustar</span>
+                                </button>
                              </div>
                           </td>
                           <td className="px-10 py-8">
@@ -616,7 +715,7 @@ const AdminDashboard: React.FC = () => {
                       <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800">
                         <div className="flex items-center gap-5">
                           <div className="p-3 bg-indigo-600/10 rounded-2xl text-indigo-600 dark:text-indigo-400"><ShieldAlert size={20} /></div>
-                          <span className="text-sm font-black text-slate-800 dark:text-white tracking-tight">Maintenace Mode</span>
+                          <span className="text-sm font-black text-slate-800 dark:text-white tracking-tight">Maintenance Mode</span>
                         </div>
                         <div className="w-16 h-8 bg-slate-300 dark:bg-slate-800 rounded-full relative cursor-pointer">
                           <div className="absolute left-1 top-1 w-6 h-6 bg-white dark:bg-slate-600 rounded-full shadow-sm" />
