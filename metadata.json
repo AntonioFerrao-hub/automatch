@@ -1,0 +1,7 @@
+{
+  "name": "AutoMatch - Vehicle Lead Marketplace",
+  "description": "A platform connecting car buyers with dealerships through qualified intent leads, featuring a multi-step buyer form and a comprehensive B2B dashboard for lead management and unlocking.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
