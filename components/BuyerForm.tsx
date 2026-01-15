@@ -10,13 +10,15 @@ import {
   CheckCircle,
   Plus,
   MapPin,
-  Tag
+  Tag,
+  Navigation
 } from 'lucide-react';
 import { CAR_BRANDS, CAR_MODELS_BY_BRAND, URGENCY_LABELS, COUNTRY_CODES } from '../constants';
 
 const BuyerForm: React.FC = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [isLocating, setIsLocating] = useState(false);
   const [customBrandInput, setCustomBrandInput] = useState("");
   const [customModelInput, setCustomModelInput] = useState("");
   const [formData, setFormData] = useState({
@@ -38,6 +40,45 @@ const BuyerForm: React.FC = () => {
 
   const nextStep = () => setStep(prev => Math.min(prev + 1, 3));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocalização não é suportada pelo seu navegador.");
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          // Usando Nominatim (OpenStreetMap) para reverse geocoding gratuito
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`
+          );
+          const data = await response.json();
+          const city = data.address.city || data.address.town || data.address.village || data.address.suburb || "Cidade Desconhecida";
+          const state = data.address.state || "";
+          
+          setFormData(prev => ({ ...prev, location: `${city} - ${state}` }));
+        } catch (error) {
+          console.error("Erro ao obter localidade:", error);
+          alert("Não foi possível determinar sua localização automaticamente.");
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        console.error("Erro de geolocalização:", error);
+        setIsLocating(false);
+        if (error.code === 1) {
+          alert("Permissão de localização negada. Por favor, digite manualmente.");
+        } else {
+          alert("Erro ao tentar obter sua localização.");
+        }
+      }
+    );
+  };
 
   const toggleBrand = (brand: string) => {
     setFormData(prev => ({
@@ -224,7 +265,7 @@ const BuyerForm: React.FC = () => {
                       <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className={inputClasses} placeholder="Como devemos te chamar?"/>
                     </div>
                     
-                    <div>
+                    <div className="md:col-span-1">
                       <label className={labelClasses}>Localidade</label>
                       <div className="relative group">
                         <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={20} />
@@ -233,13 +274,26 @@ const BuyerForm: React.FC = () => {
                           required 
                           value={formData.location} 
                           onChange={e => setFormData({...formData, location: e.target.value})} 
-                          className={`${inputClasses} pl-14`} 
+                          className={`${inputClasses} pl-14 pr-32`} 
                           placeholder="Cidade - UF"
                         />
+                        <button
+                          type="button"
+                          onClick={handleDetectLocation}
+                          disabled={isLocating}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-800 hover:bg-slate-700 text-indigo-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-700 transition-all flex items-center gap-2 disabled:opacity-50"
+                        >
+                          {isLocating ? (
+                            <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Navigation size={12} />
+                          )}
+                          Detectar
+                        </button>
                       </div>
                     </div>
 
-                    <div className="flex flex-col justify-end">
+                    <div className="flex flex-col justify-end md:col-span-1">
                        <label className={labelClasses}>Busca Regional</label>
                        <button 
                          type="button"
@@ -253,7 +307,7 @@ const BuyerForm: React.FC = () => {
                          <div className={`w-12 h-7 rounded-full relative transition-all ${formData.acceptsRemoteProposals ? 'bg-indigo-600 shadow-lg shadow-indigo-600/30' : 'bg-slate-800'}`}>
                            <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${formData.acceptsRemoteProposals ? 'right-1' : 'left-1'}`} />
                          </div>
-                         <span className="uppercase tracking-widest">{formData.acceptsRemoteProposals ? 'Aceito Ofertas Globais' : 'Apenas Local'}</span>
+                         <span className="uppercase tracking-widest">{formData.acceptsRemoteProposals ? 'Ofertas Globais' : 'Apenas Local'}</span>
                        </button>
                     </div>
 

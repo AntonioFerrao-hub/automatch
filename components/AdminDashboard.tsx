@@ -26,7 +26,6 @@ import {
   Globe,
   MapPin,
   Building2,
-  Tag,
   Zap,
   Target,
   Sun,
@@ -38,6 +37,7 @@ import {
 } from 'lucide-react';
 import { MOCK_LEADS, MOCK_DEALERS, MOCK_ADMINS } from '../constants';
 import { Lead, Dealership, AdminUser } from '../types';
+import { AutoMatchLogo } from '../App';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -66,7 +66,6 @@ const AdminDashboard: React.FC = () => {
     credits: 0
   });
 
-  // Credit Adjustment State
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [creditModalTarget, setCreditModalTarget] = useState<Dealership | null>(null);
   const [adjustmentType, setAdjustmentType] = useState<'add' | 'deduct'>('add');
@@ -147,7 +146,6 @@ const AdminDashboard: React.FC = () => {
         : d
     ));
 
-    // In a real app, we would send 'adjustmentNote' to the backend here
     console.log(`Credit Adjustment Log: Dealer ${creditModalTarget.name}, Amount: ${finalAmount}, Note: ${adjustmentNote}`);
     
     setIsCreditModalOpen(false);
@@ -256,7 +254,8 @@ const AdminDashboard: React.FC = () => {
                   <CreditCard className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                   <input 
                     type="number" 
-                    className={adminInputClasses + " pl-14"} 
+                    className={adminInputClasses} 
+                    style={{ paddingLeft: '3.5rem' }}
                     value={adjustmentAmount}
                     onChange={e => setAdjustmentAmount(Math.abs(parseInt(e.target.value) || 0))}
                   />
@@ -287,12 +286,15 @@ const AdminDashboard: React.FC = () => {
       )}
 
       <aside className={`fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-900 flex flex-col z-50 transition-transform duration-300 lg:translate-x-0 lg:static lg:h-screen ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-600/20"><ShieldCheck size={24} /></div>
-            <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">Super Admin</span>
+        <div className="p-8 border-b border-slate-100 dark:border-slate-900">
+          <div className="flex items-center justify-between mb-8">
+            <AutoMatchLogo className="h-9" />
+            <button className="lg:hidden text-slate-500" onClick={() => setIsSidebarOpen(false)}><X size={24}/></button>
           </div>
-          <button className="lg:hidden text-slate-500" onClick={() => setIsSidebarOpen(false)}><X size={24}/></button>
+          <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+             <ShieldCheck className="text-indigo-600 dark:text-indigo-400" size={20} />
+             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white">Acesso Super Admin</span>
+          </div>
         </div>
         <nav className="flex-grow p-6 space-y-3">
           <SidebarItem id="dashboard" icon={LayoutDashboard} label="Performance" />
@@ -375,7 +377,7 @@ const AdminDashboard: React.FC = () => {
                     />
                  </div>
                  <div className="relative group">
-                    <Tag className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-700 group-focus-within:text-indigo-500 transition-colors" size={20} />
+                    <Zap className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-700 group-focus-within:text-indigo-500 transition-colors" size={20} />
                     <input 
                       type="text" 
                       placeholder="Filtro por Modelo" 

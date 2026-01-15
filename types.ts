@@ -17,6 +17,7 @@ export interface Lead {
   location: string; // Cidade/Estado
   acceptsRemoteProposals: boolean; // Se aceita propostas de fora da região
   status: 'new' | 'unlocked';
+  unlockCount: number; // Quantidade de revendas que solicitaram o contato
   createdAt: string;
 }
 

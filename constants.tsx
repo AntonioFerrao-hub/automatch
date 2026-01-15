@@ -12,7 +12,7 @@ import {
   Mail, 
   Briefcase 
 } from 'lucide-react';
-import { AdminUser } from './types';
+import { AdminUser, Lead } from './types';
 
 export const CAR_BRANDS = [
   "Volkswagen", "Chevrolet", "Fiat", "Toyota", "Hyundai", 
@@ -44,7 +44,7 @@ export const CAR_MODELS_BY_BRAND: Record<string, string[]> = {
   "Renault": ["Kwid", "Sandero", "Duster", "Oroch"],
 };
 
-export const MOCK_LEADS: any[] = [
+export const MOCK_LEADS: Lead[] = [
   {
     id: '1',
     brands: ['Volkswagen'],
@@ -61,6 +61,7 @@ export const MOCK_LEADS: any[] = [
     location: 'Florianópolis - SC',
     acceptsRemoteProposals: true,
     status: 'new',
+    unlockCount: 2,
     createdAt: '2025-12-01T10:00:00Z'
   },
   {
@@ -79,6 +80,7 @@ export const MOCK_LEADS: any[] = [
     location: 'Cuiabá - MT',
     acceptsRemoteProposals: true,
     status: 'new',
+    unlockCount: 0,
     createdAt: '2025-12-05T10:45:00Z'
   }
 ];
